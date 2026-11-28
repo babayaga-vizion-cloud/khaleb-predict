@@ -1,10 +1,43 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>khaleb-predict — Suivi &amp; Bankroll</title>
   <link rel="stylesheet" href="./assets/bankroll.css" />
+<style id="khaleb-multiservice-styles">
+@keyframes msFadeSlide {
+from { opacity: 0; transform: translateY(8px); }
+to { opacity: 1; transform: translateY(0); }
+}
+.ms-anim-in {
+animation: msFadeSlide 0.28s ease-out both;
+}
+.ms-card {
+border: 1px solid rgba(148, 163, 184, 0.25);
+border-radius: 10px;
+padding: 12px;
+margin-bottom: 10px;
+background: rgba(15, 23, 42, 0.45);
+transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.ms-card:hover {
+transform: translateY(-2px);
+border-color: rgba(34, 197, 94, 0.65);
+}
+[data-ms-tab] {
+cursor: pointer;
+padding: 8px 12px;
+border-radius: 8px;
+transition: transform 0.15s ease, background-color 0.2s ease;
+}
+[data-ms-tab]:hover {
+transform: translateY(-1px);
+}
+.ms-tab-active {
+outline: 2px solid #22c55e;
+}
+</style>
 </head>
 <body>
   <main class="bk-container">
@@ -178,50 +211,89 @@
   <script src="./assets/sauvegarde-json.js"></script>
   <script src="./assets/verify-bankroll.js"></script>
   <script src="./assets/audit-projet.js"></script>
+
+
 <section id="khaleb-multiservice-hub" style="max-width:1100px;margin:24px auto;padding:16px;">
-  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-    <button type="button" data-ms-tab="all">Tout afficher</button>
-    <button type="button" data-ms-tab="bankroll">Bankroll &amp; Tickets</button>
-    <button type="button" data-ms-tab="services">Services &amp; Annuaire</button>
-    <button type="button" data-ms-tab="plans">Abonnements FCFA &amp; Devises</button>
-    <button type="button" data-ms-tab="initiatives">Dons &amp; Sweepstakes</button>
-  </div>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+<h2 id="ms-hub-title" style="margin:0;">Hub Multiservice &amp; IA Locale — khaleb-predict</h2>
+<label for="ms-lang-select">Langue :
+  <select id="ms-lang-select">
+    <option value="fr">FR</option>
+    <option value="en">EN</option>
+  </select>
+</label>
+</div>
 
-  <div data-ms-panel="services" style="margin-bottom:20px;">
-    <h2>Services locaux, IT &amp; Annuaire</h2>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-      <input id="ms-service-search" type="search" placeholder="Rechercher un service ou une ville..." />
-      <select id="ms-service-category">
-        <option value="all">Toutes catégories</option>
-        <option value="IT & Réseaux">IT &amp; Réseaux</option>
-        <option value="Investigation">Investigation</option>
-        <option value="Finance & Gage">Finance &amp; Gage</option>
-        <option value="Cloud & Web">Cloud &amp; Web</option>
-      </select>
-    </div>
-    <div id="ms-services-list"></div>
-  </div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+<button type="button" data-ms-tab="all">Tout afficher</button>
+<button type="button" data-ms-tab="bankroll">Bankroll &amp; Tickets</button>
+<button type="button" data-ms-tab="ai">IA Elo &amp; Poisson</button>
+<button type="button" data-ms-tab="services">Services &amp; Annuaire</button>
+<button type="button" data-ms-tab="plans">Abonnements FCFA &amp; Devises</button>
+<button type="button" data-ms-tab="initiatives">Dons &amp; Sweepstakes</button>
+</div>
 
-  <div data-ms-panel="plans" style="margin-bottom:20px;">
-    <h2>Abonnements FCFA &amp; Convertisseur multi-devises</h2>
-    <div id="ms-plans-list"></div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;">
-      <label for="ms-xaf-amount">Montant XAF :</label>
-      <input id="ms-xaf-amount" type="number" min="0" step="500" value="10000" />
-      <select id="ms-target-currency">
-        <option value="EUR">EUR</option>
-        <option value="USD">USD</option>
-        <option value="GBP">GBP</option>
-        <option value="XAF">XAF</option>
-      </select>
-      <strong id="ms-currency-result"></strong>
-    </div>
-  </div>
+<div data-ms-panel="ai" style="margin-bottom:20px;">
+<h3 id="ms-ai-title">Moteur IA Local (Elo + Poisson &amp; Mise Recommandée)</h3>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+  <label>Elo A <input id="ms-ai-elo-a" type="number" value="1560" step="10" /></label>
+  <label>Elo B <input id="ms-ai-elo-b" type="number" value="1490" step="10" /></label>
+  <label>xG A <input id="ms-ai-xg-a" type="number" value="1.65" step="0.05" min="0.1" /></label>
+  <label>xG B <input id="ms-ai-xg-b" type="number" value="1.05" step="0.05" min="0.1" /></label>
+  <label>Cote <input id="ms-ai-odds" type="number" value="1.95" step="0.05" min="1.01" /></label>
+  <label>Bankroll <input id="ms-ai-bankroll" type="number" value="50000" step="1000" min="0" /></label>
+</div>
+<div id="ms-ai-output"></div>
+</div>
 
-  <div data-ms-panel="initiatives" style="margin-bottom:20px;">
-    <h2>Dons vérifiés &amp; Sweepstakes internationaux</h2>
-    <div id="ms-initiatives-list"></div>
-  </div>
+<div data-ms-panel="services" style="margin-bottom:20px;">
+<h3>Services locaux, IT &amp; Annuaire</h3>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+  <input id="ms-service-search" type="search" placeholder="Rechercher un service ou une ville..." />
+  <select id="ms-service-category">
+    <option value="all">Toutes catégories</option>
+    <option value="IT & Réseaux">IT &amp; Réseaux</option>
+    <option value="Investigation">Investigation</option>
+    <option value="Finance & Gage">Finance &amp; Gage</option>
+    <option value="Cloud & Web">Cloud &amp; Web</option>
+  </select>
+</div>
+<div id="ms-services-list"></div>
+<form id="ms-add-service-form" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+  <input id="ms-new-nom" type="text" placeholder="Nom du service" required />
+  <select id="ms-new-cat">
+    <option value="IT & Réseaux">IT &amp; Réseaux</option>
+    <option value="Investigation">Investigation</option>
+    <option value="Finance & Gage">Finance &amp; Gage</option>
+    <option value="Cloud & Web">Cloud &amp; Web</option>
+  </select>
+  <input id="ms-new-ville" type="text" placeholder="Ville" value="Yaoundé" />
+  <input id="ms-new-tarif" type="text" placeholder="Tarif" value="Sur devis" />
+  <input id="ms-new-contact" type="text" placeholder="Contact" value="WhatsApp" />
+  <button type="submit">Ajouter service</button>
+</form>
+</div>
+
+<div data-ms-panel="plans" style="margin-bottom:20px;">
+<h3>Abonnements FCFA &amp; Convertisseur multi-devises</h3>
+<div id="ms-plans-list"></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;">
+  <label for="ms-xaf-amount">Montant XAF :</label>
+  <input id="ms-xaf-amount" type="number" min="0" step="500" value="10000" />
+  <select id="ms-target-currency">
+    <option value="EUR">EUR</option>
+    <option value="USD">USD</option>
+    <option value="GBP">GBP</option>
+    <option value="XAF">XAF</option>
+  </select>
+  <strong id="ms-currency-result"></strong>
+</div>
+</div>
+
+<div data-ms-panel="initiatives" style="margin-bottom:20px;">
+<h3>Dons vérifiés &amp; Sweepstakes internationaux</h3>
+<div id="ms-initiatives-list"></div>
+</div>
 </section>
 <script src="./assets/multiservice.js"></script>
 </body>
