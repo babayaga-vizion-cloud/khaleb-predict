@@ -229,6 +229,7 @@ outline: 2px solid #22c55e;
 <button type="button" data-ms-tab="bankroll">Bankroll &amp; Tickets</button>
 <button type="button" data-ms-tab="ai">IA Elo &amp; Poisson</button>
 <button type="button" data-ms-tab="services">Services &amp; Annuaire</button>
+    <button type="button" data-ms-tab="fret">Fret &amp; Transport</button>
 <button type="button" data-ms-tab="plans">Abonnements FCFA &amp; Devises</button>
 <button type="button" data-ms-tab="initiatives">Dons &amp; Sweepstakes</button>
 </div>
@@ -274,7 +275,24 @@ outline: 2px solid #22c55e;
 </form>
 </div>
 
-<div data-ms-panel="plans" style="margin-bottom:20px;">
+  <div data-ms-panel="fret" style="margin-bottom:20px;">
+    <h3>Fret, Colis &amp; Transport</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+      <label for="ms-fret-route">Axe :
+        <select id="ms-fret-route">
+          <option value="0">Yaoundé -> Douala</option>
+          <option value="1">Cameroun -> Europe / Amérique du Nord</option>
+          <option value="2">Zone CEMAC / Afrique Centrale</option>
+        </select>
+      </label>
+      <label for="ms-fret-kg">Poids (kg) :
+        <input id="ms-fret-kg" type="number" min="0.5" step="0.5" value="5" />
+      </label>
+    </div>
+    <div id="ms-fret-result"></div>
+  </div>
+
+  <div data-ms-panel="plans" style="margin-bottom:20px;">
 <h3>Abonnements FCFA &amp; Convertisseur multi-devises</h3>
 <div id="ms-plans-list"></div>
 <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;">
