@@ -314,6 +314,122 @@ outline: 2px solid #22c55e;
 </div>
 </section>
 <script src="./assets/multiservice.js"></script>
+<script id="khaleb-live-guard">
+(function () {
+if (window.__khalebGuardInstalled) return;
+window.__khalebGuardInstalled = true;
+
+const TAUX = { XAF: 1, EUR: 1 / 655.957, USD: 1 / 600, GBP: 1 / 760 };
+const ROUTES = [
+{ trajet: "Yaoundé -> Douala", delai: "24h - 48h", base: 15000 },
+{ trajet: "Cameroun -> Europe / Amérique du Nord", delai: "5 - 12 jours", base: 85000 },
+{ trajet: "Zone CEMAC / Afrique Centrale", delai: "3 - 7 jours", base: 45000 }
+];
+
+function fmt(n) {
+return Number(n || 0).toLocaleString("fr-FR") + " XAF";
+}
+
+function fact(n) {
+let r = 1;
+for (let i = 2; i <= n; i++) r *= i;
+return r;
+}
+
+function pois(l, k) {
+return (Math.pow(l, k) * Math.exp(-l)) / fact(k);
+}
+
+function runAi() {
+const out = document.getElementById("ms-ai-output");
+if (!out) return;
+const eloA = Number(document.getElementById("ms-ai-elo-a")?.value) || 1560;
+const eloB = Number(document.getElementById("ms-ai-elo-b")?.value) || 1490;
+const xgA = Math.max(0.1, Number(document.getElementById("ms-ai-xg-a")?.value) || 1.65);
+const xgB = Math.max(0.1, Number(document.getElementById("ms-ai-xg-b")?.value) || 1.05);
+const odds = Math.max(1.01, Number(document.getElementById("ms-ai-odds")?.value) || 1.95);
+const br = Math.max(0, Number(document.getElementById("ms-ai-bankroll")?.value) || 50000);
+
+const pElo = 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+let pPois = 0;
+for (let i = 0; i <= 5; i++) {
+  for (let j = 0; j < i; j++) {
+    pPois += pois(xgA, i) * pois(xgB, j);
+  }
+}
+const pComb = Math.min(0.95, Math.max(0.02, pElo * 0.45 + pPois * 0.55));
+const edge = pComb * odds - 1;
+const stake = Math.round(br * (edge > 0 ? Math.min(0.05, (edge / (odds - 1)) * 0.25) : 0));
+out.innerHTML = `<div class="ms-card ms-anim-in"><strong>Probabilité :</strong> ${(pComb * 100).toFixed(1)}% (Elo ${(pElo * 100).toFixed(1)}% • Poisson ${(pPois * 100).toFixed(1)}%)<br><strong>Edge :</strong> ${(edge * 100).toFixed(1)}% • <strong>Mise conseillée :</strong> ${fmt(stake)}</div>`;
+}
+
+function runFx() {
+const out = document.getElementById("ms-currency-result");
+if (!out) return;
+const xaf = Math.max(0, Number(document.getElementById("ms-xaf-amount")?.value) || 0);
+const dev = document.getElementById("ms-target-currency")?.value || "EUR";
+out.textContent = `${fmt(xaf)} ≈ ${(xaf * (TAUX[dev] || 1)).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} ${dev}`;
+}
+
+function runFret() {
+const out = document.getElementById("ms-fret-result");
+if (!out) return;
+const idx = Number(document.getElementById("ms-fret-route")?.value) || 0;
+const kg = Math.max(0.5, Number(document.getElementById("ms-fret-kg")?.value) || 5);
+const r = ROUTES[idx] || ROUTES[0];
+out.innerHTML = `<div class="ms-card ms-anim-in"><strong>${r.trajet}</strong> (${r.delai}) — Estimation : <strong>${fmt(Math.round(r.base + kg * 1800))}</strong></div>`;
+}
+
+function selectTab(tab) {
+const br = document.getElementById("khaleb-bankroll-module");
+if (br) br.style.display = (tab === "all" || tab === "bankroll") ? "" : "none";
+document.querySelectorAll("[data-ms-panel]").forEach((p) => {
+  const show = tab === "all" || p.getAttribute("data-ms-panel") === tab;
+  p.style.display = show ? "" : "none";
+});
+document.querySelectorAll("[data-ms-tab]").forEach((b) => {
+  const active = b.getAttribute("data-ms-tab") === tab;
+  b.style.outline = active ? "2px solid #22c55e" : "none";
+});
+}
+
+document.addEventListener("click", (e) => {
+const btn = e.target.closest("[data-ms-tab]");
+if (!btn) return;
+selectTab(btn.getAttribute("data-ms-tab") || "all");
+});
+
+document.addEventListener("input", (e) => {
+const id = e.target?.id || "";
+if (id.startsWith("ms-ai-")) runAi();
+if (id === "ms-xaf-amount") runFx();
+if (id === "ms-fret-kg") runFret();
+});
+
+document.addEventListener("change", (e) => {
+const id = e.target?.id || "";
+if (id === "ms-target-currency") runFx();
+if (id === "ms-fret-route") runFret();
+if (id === "ms-lang-select") {
+  const h = document.getElementById("ms-hub-title");
+  if (h) h.textContent = e.target.value === "en" ? "KHALEB PREDICT — Full Multiservice & Local AI Hub" : "KHALEB PREDICT — Hub Multiservice Complet & IA Locale";
+}
+});
+
+function initNow() {
+runAi();
+runFx();
+runFret();
+selectTab("all");
+}
+
+if (document.readyState === "loading") {
+document.addEventListener("DOMContentLoaded", initNow);
+} else {
+initNow();
+}
+})();
+</script>
 </body>
 </html>
 
