@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -178,5 +178,52 @@
   <script src="./assets/sauvegarde-json.js"></script>
   <script src="./assets/verify-bankroll.js"></script>
   <script src="./assets/audit-projet.js"></script>
+<section id="khaleb-multiservice-hub" style="max-width:1100px;margin:24px auto;padding:16px;">
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+    <button type="button" data-ms-tab="all">Tout afficher</button>
+    <button type="button" data-ms-tab="bankroll">Bankroll &amp; Tickets</button>
+    <button type="button" data-ms-tab="services">Services &amp; Annuaire</button>
+    <button type="button" data-ms-tab="plans">Abonnements FCFA &amp; Devises</button>
+    <button type="button" data-ms-tab="initiatives">Dons &amp; Sweepstakes</button>
+  </div>
+
+  <div data-ms-panel="services" style="margin-bottom:20px;">
+    <h2>Services locaux, IT &amp; Annuaire</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <input id="ms-service-search" type="search" placeholder="Rechercher un service ou une ville..." />
+      <select id="ms-service-category">
+        <option value="all">Toutes catégories</option>
+        <option value="IT & Réseaux">IT &amp; Réseaux</option>
+        <option value="Investigation">Investigation</option>
+        <option value="Finance & Gage">Finance &amp; Gage</option>
+        <option value="Cloud & Web">Cloud &amp; Web</option>
+      </select>
+    </div>
+    <div id="ms-services-list"></div>
+  </div>
+
+  <div data-ms-panel="plans" style="margin-bottom:20px;">
+    <h2>Abonnements FCFA &amp; Convertisseur multi-devises</h2>
+    <div id="ms-plans-list"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;">
+      <label for="ms-xaf-amount">Montant XAF :</label>
+      <input id="ms-xaf-amount" type="number" min="0" step="500" value="10000" />
+      <select id="ms-target-currency">
+        <option value="EUR">EUR</option>
+        <option value="USD">USD</option>
+        <option value="GBP">GBP</option>
+        <option value="XAF">XAF</option>
+      </select>
+      <strong id="ms-currency-result"></strong>
+    </div>
+  </div>
+
+  <div data-ms-panel="initiatives" style="margin-bottom:20px;">
+    <h2>Dons vérifiés &amp; Sweepstakes internationaux</h2>
+    <div id="ms-initiatives-list"></div>
+  </div>
+</section>
+<script src="./assets/multiservice.js"></script>
 </body>
 </html>
+
