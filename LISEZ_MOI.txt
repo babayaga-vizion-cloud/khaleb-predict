@@ -1,0 +1,30 @@
+BABAYAGA VIZION — VERSION PROFESSIONNELLE (prototype évolué)
+
+CONTENU
+- Babayaga_Vizion.html : interface locale avec OCR de captures, validation humaine, base de matchs, classement Elo, prédictions 1X2, scores exacts, Over 2.5 et BTTS.
+- api.py + requirements.txt : socle d'API Python pour entraîner CatBoost et XGBoost avec séparation chronologique.
+- modele_babayaga.csv : modèle d'import CSV.
+
+DÉMARRAGE INTERFACE
+1. Ouvrir Babayaga_Vizion.html dans Chrome/Edge.
+2. OCR : sélectionner des captures, lancer la reconnaissance, corriger chaque ligne et valider.
+3. Importer les historiques via CSV. Les résultats OCR ne sont jamais enregistrés comme observés sans validation humaine.
+4. Les données restent dans le stockage local du navigateur. Exporter régulièrement le CSV pour sauvegarde.
+
+BACKEND ML
+1. Installer Python 3.10+.
+2. Dans ce dossier : pip install -r requirements.txt
+3. Lancer : uvicorn api:app --reload
+4. POST /train avec une liste JSON de matchs observés (date, home, away, hg, ag).
+Le backend refuse l'entraînement sous 300 lignes. 300 est un minimum technique indicatif, pas une garantie de fiabilité. Pour eFootball, viser des milliers de matchs propres et représentatifs, avec un test chronologique indépendant.
+
+LIMITES IMPORTANTES
+- Les 19 matchs de départ sont transcrits depuis les captures précédemment fournies. Les dates de quatre premiers matchs ne sont pas visibles : elles sont laissées vides plutôt que supposées. Les captures 215 à 217 montrent des segments qui se chevauchent du même coupon #13579506009 : ne pas compter chaque apparition comme un nouveau match. Le coupon contient 15 sélections, 7 gagnées et 8 perdues, cote totale 90 336,08 et mise 1 FCFA.
+- Le moteur HTML actuel est Elo + Poisson régularisé + cotes. Il ne prétend pas avoir CatBoost/XGBoost embarqués. Ceux-ci sont dans le backend et doivent être entraînés avec assez de données.
+- L'OCR peut confondre les noms, scores et cotes. Validation humaine indispensable.
+- Le système distingue les résultats observés (source + statut) des estimations IA.
+- Le tableau affiche N/D tant qu'il n'existe pas de prédictions historiques réellement enregistrées puis vérifiées.
+- Aucune précision de 90 %, aucun score exact ni gain n'est garanti. Les probabilités de scores exacts sont souvent dispersées.
+- Ne jamais importer de mots de passe, codes OTP, identifiants ou informations privées de compte.
+
+Backend Python : voir INSTALLATION_ET_ENTRAINEMENT.txt. Lancer install_windows.bat puis start_backend.bat.

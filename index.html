@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>khaleb-predict — Suivi &amp; Bankroll</title>
+  <link rel="stylesheet" href="./assets/bankroll.css" />
+</head>
+<body>
+  <main class="bk-container">
+    <section id="khaleb-bankroll-module" class="bk-module" aria-label="Gestion de bankroll et tickets">
+      <div class="bk-header">
+        <div class="bk-header-left">
+          <h1>khaleb-predict · Bankroll</h1>
+          <span id="bk-net-pill" class="bk-net-pill online">En ligne</span>
+          <span id="bk-pending-sync-pill" class="bk-pending-sync-pill" role="status" aria-live="polite" hidden></span>
+        </div>
+
+        <div class="bk-header-actions">
+          <button
+            type="button"
+            id="bk-undo-btn"
+            class="bk-undo-btn"
+            aria-label="Annuler la dernière action (Ctrl+Z / Cmd+Z)"
+            title="Annuler la dernière action (Ctrl+Z / Cmd+Z)"
+            hidden
+            disabled
+          >
+            Annuler dernière action
+          </button>
+          <button
+            type="button"
+            id="bk-redo-btn"
+            class="bk-redo-btn"
+            aria-label="Rétablir la dernière action (Ctrl+Shift+Z / Cmd+Shift+Z)"
+            title="Rétablir la dernière action (Ctrl+Shift+Z / Cmd+Shift+Z)"
+            hidden
+            disabled
+          >
+            Rétablir dernière action
+          </button>
+          <button type="button" id="bk-export-json-btn" class="bk-refresh-btn">Exporter JSON</button>
+          <label for="bk-import-json-input" class="bk-refresh-btn bk-import-label">Importer JSON</label>
+          <input id="bk-import-json-input" type="file" accept="application/json,.json" hidden />
+          <button type="button" id="bk-sync-btn" class="bk-sync-btn" hidden>Synchroniser (0)</button>
+          <button type="button" id="bk-clear-queue-btn" class="bk-clear-queue-btn" hidden>Vider la file (0)</button>
+          <button type="button" id="bk-refresh-btn" class="bk-refresh-btn">Actualiser</button>
+        </div>
+      </div>
+
+      <form id="bk-ticket-form" class="bk-form" novalidate>
+        <div class="bk-form-grid">
+          <label class="bk-field">
+            <span>Événement / Match</span>
+            <input id="bk-event-input" type="text" required placeholder="Ex. Cameroun vs Sénégal" />
+          </label>
+          <label class="bk-field">
+            <span>Marché</span>
+            <input id="bk-market-input" type="text" placeholder="Ex. Victoire 1" />
+          </label>
+          <label class="bk-field">
+            <span>Cote</span>
+            <input id="bk-odds-input" type="number" step="0.01" min="1.01" value="1.85" required />
+          </label>
+          <label class="bk-field">
+            <span>Mise</span>
+            <input id="bk-stake-input" type="number" step="0.01" min="0.01" value="1000" required />
+          </label>
+          <label class="bk-field">
+            <span>Devise</span>
+            <select id="bk-currency-select">
+              <option value="XAF" selected>XAF</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="NGN">NGN</option>
+              <option value="KES">KES</option>
+              <option value="MAD">MAD</option>
+              <option value="BRL">BRL</option>
+              <option value="CAD">CAD</option>
+            </select>
+          </label>
+          <label class="bk-field">
+            <span>Statut</span>
+            <select id="bk-status-select">
+              <option value="pending" selected>En attente (pending)</option>
+              <option value="won">Gagné (won)</option>
+              <option value="lost">Perdu (lost)</option>
+              <option value="void">Annulé (void)</option>
+            </select>
+          </label>
+          <label class="bk-field">
+            <span>PNL estimé / réel</span>
+            <input id="bk-pnl-input" type="number" step="0.01" value="0" readonly />
+          </label>
+        </div>
+        <div class="bk-form-actions">
+          <button type="submit" id="bk-submit-btn" class="bk-sync-visible-btn">Enregistrer le ticket</button>
+          <button type="button" id="bk-cancel-edit-btn" class="bk-reset-filters-btn" hidden>Annuler l'édition</button>
+        </div>
+      </form>
+
+      <div class="bk-toolbar">
+        <div class="bk-toolbar-left">
+          <label for="bk-status-filter" class="bk-filter-label">Statut :</label>
+          <select id="bk-status-filter" class="bk-filter-select">
+            <option value="all">Tous</option>
+            <option value="pending">En attente</option>
+            <option value="won">Gagné</option>
+            <option value="lost">Perdu</option>
+            <option value="void">Annulé</option>
+          </select>
+
+          <button type="button" id="bk-pending-filter-btn" class="bk-pending-filter-btn" aria-pressed="false">
+            En attente de sync (0)
+          </button>
+
+          <button type="button" id="bk-sync-visible-btn" class="bk-sync-visible-btn" hidden>
+            Sync visibles (0)
+          </button>
+
+          <div class="bk-bulk-group">
+            <label for="bk-bulk-status-select" class="bk-filter-label">Lot visibles :</label>
+            <select id="bk-bulk-status-select" class="bk-bulk-select" aria-label="Nouveau statut pour les tickets visibles">
+              <option value="won">Gagné (won)</option>
+              <option value="lost">Perdu (lost)</option>
+              <option value="pending">En attente (pending)</option>
+              <option value="void">Annulé (void)</option>
+            </select>
+            <button type="button" id="bk-bulk-apply-btn" class="bk-bulk-apply-btn" disabled>Appliquer (0)</button>
+            <button type="button" id="bk-bulk-delete-btn" class="bk-bulk-delete-btn" disabled>Supprimer (0)</button>
+          </div>
+        </div>
+
+        <div class="bk-toolbar-right">
+          <input
+            type="search"
+            id="bk-search-input"
+            class="bk-search-input"
+            placeholder="Rechercher match, marché, devise..."
+            aria-label="Rechercher un ticket"
+          />
+          <button type="button" id="bk-reset-filters-btn" class="bk-reset-filters-btn">Réinitialiser</button>
+        </div>
+      </div>
+
+      <p class="bk-shortcuts-hint">
+        Raccourcis clavier : <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd> pour annuler · <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> pour rétablir.
+      </p>
+
+      <p id="bk-status-msg" class="bk-status" role="status" aria-live="polite">Prêt.</p>
+
+      <div id="bk-ai-advisor-panel" class="bk-ai-panel" aria-live="polite"></div>
+
+      <div class="bk-table-wrap">
+        <table id="bk-tickets-table" class="bk-table">
+          <thead>
+            <tr>
+              <th>Événement</th>
+              <th>Marché</th>
+              <th>Cote</th>
+              <th>Mise</th>
+              <th>PNL</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="./assets/i18n-global.js"></script>
+  <script src="./assets/ai-advisor.js"></script>
+  <script src="./assets/bankroll.js"></script>
+  <script src="./assets/formulaire-bankroll.js"></script>
+  <script src="./assets/sauvegarde-json.js"></script>
+  <script src="./assets/verify-bankroll.js"></script>
+  <script src="./assets/audit-projet.js"></script>
+</body>
+</html>

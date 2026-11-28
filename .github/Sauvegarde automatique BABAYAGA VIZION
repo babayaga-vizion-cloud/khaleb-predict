@@ -1,0 +1,43 @@
+name: Sauvegarde automatique BABAYAGA VIZION
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer les outils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client gnupg
+
+      - name: Executer la sauvegarde Supabase
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          chmod +x scripts/backup_supabase.sh
+          bash scripts/backup_supabase.sh
+
+      - name: Verifier la sauvegarde chiffree
+        run: |
+          test -n "$(find backups -type f -name '*.dump.gpg' -print -quit)"
+          test -z "$(find backups -type f -name '*.dump' -print -quit)"
+
+      - name: Archiver la sauvegarde
+        uses: actions/upload-artifact@v4
+        with:
+          name: babayaga-vizion-backup-${{ github.run_number }}
+          path: backups/
+          retention-days: 90
+          if-no-files-found: error

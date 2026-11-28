@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: khaleb-predict-os-api
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    disk:
+      name: khaleb-models
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: MODELS_DIR
+        value: /var/data/models

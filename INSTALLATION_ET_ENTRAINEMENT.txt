@@ -1,0 +1,22 @@
+BABAYAGA VIZION — INSTALLATION DU BACKEND PYTHON
+
+1) Prérequis : Windows 10/11, Python 3.11 ou 3.12 64 bits, Internet.
+   Installer Python depuis python.org et cocher "Add Python to PATH".
+2) Décompresser l'archive dans C:\BabayagaVizion.
+3) Double-cliquer install_windows.bat et attendre l'installation de CatBoost, XGBoost et FastAPI.
+4) Double-cliquer start_backend.bat. Garder la fenêtre ouverte.
+5) Ouvrir http://127.0.0.1:8000/docs ; /health confirme que l'API fonctionne.
+
+ENTRAÎNEMENT
+- Dans l'application HTML, exporter la base de matchs en CSV.
+- Pour le moment, l'entraînement API se fait via POST /train dans la documentation /docs :
+  coller un tableau JSON de matchs ayant date, home, away, hg, ag et status='observed'.
+- L'API refuse moins de 300 matchs. C'est un seuil technique minimal, pas une garantie.
+- Le backend effectue une séparation chronologique 80% entraînement / 20% test et affiche accuracy 1X2 + log-loss.
+- Après entraînement, models/ensemble.joblib est créé.
+- POST /predict prend {"home":"Player A","away":"Player B"} et retourne les probabilités 1/N/2.
+- IMPORTANT : le bouton Prédire de l'interface HTML n'est pas encore relié automatiquement à cette API. Le backend fonctionne séparément via /docs. Le branchement de l'interface est une étape d'intégration distincte.
+- Le backend ne prédit pas encore les scores exacts, Over/Under ou BTTS avec CatBoost/XGBoost. L'interface actuelle conserve son estimation Elo+Poisson pour ces marchés.
+
+QUALITÉ
+Les 19 matchs de départ sont très insuffisants pour l'entraînement ML. Viser plusieurs milliers de résultats vérifiés, mêmes règles/modes de jeu, avec historique par participant. Les données OCR doivent être corrigées avant validation. Ne jamais traiter une estimation IA comme un résultat observé. Ne pas exposer l'API sur Internet (elle écoute uniquement 127.0.0.1). Aucun taux de 90% ni gain n'est garanti.
