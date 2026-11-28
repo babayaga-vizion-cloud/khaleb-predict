@@ -1,175 +1,132 @@
-(function initKhalebMultiservice() {
+(function initKhalebCompleteHub() {
   if (typeof document === 'undefined') return;
-
-  const SERVICES_LOCAUX = [
-    {
-      nom: 'Khaleb Technologie - Support IT & Diagnostic',
-      categorie: 'IT & Réseaux',
-      ville: 'Yaoundé',
-      tarif: 'À partir de 5 000 XAF',
-      contact: 'WhatsApp / Appel direct'
-    },
-    {
-      nom: 'Enquêtes & Vérifications Privées',
-      categorie: 'Investigation',
-      ville: 'Yaoundé / Cameroun',
-      tarif: 'Sur devis confidentiel',
-      contact: 'Dossier sécurisé'
-    },
-    {
-      nom: 'Crédit sur Gage & Micro-Financement',
-      categorie: 'Finance & Gage',
-      ville: 'Yaoundé',
-      tarif: 'Conditions transparentes',
-      contact: 'Évaluation rapide'
-    },
-    {
-      nom: 'Hébergement & Déploiement Web / API',
-      categorie: 'Cloud & Web',
-      ville: 'En ligne',
-      tarif: 'Forfaits mensuels / annuels',
-      contact: 'Déploiement GitHub / Cloud'
-    }
+  const KEY = 'khaleb_predict_services_v1';
+  const DEFAULTS = [
+    { nom: 'Khaleb Technologie - Support IT & Diagnostic', categorie: 'IT & Réseaux', ville: 'Yaoundé', tarif: 'À partir de 5 000 XAF', contact: 'WhatsApp / Appel direct' },
+    { nom: 'Enquêtes & Vérifications Privées', categorie: 'Investigation', ville: 'Yaoundé / Cameroun', tarif: 'Sur devis confidentiel', contact: 'Dossier sécurisé' },
+    { nom: 'Crédit sur Gage & Micro-Financement', categorie: 'Finance & Gage', ville: 'Yaoundé', tarif: 'Conditions transparentes', contact: 'Évaluation rapide' },
+    { nom: 'Hébergement & Déploiement Web / API', categorie: 'Cloud & Web', ville: 'En ligne', tarif: 'Forfaits mensuels / annuels', contact: 'Déploiement GitHub / Cloud' }
   ];
-
-  const PLANS_FCFA = [
-    { plan: 'Découverte', prixXaf: 0, periode: '/ mois', details: 'Suivi bankroll de base + annuaire services' },
-    { plan: 'Pro Analyste', prixXaf: 5000, periode: '/ mois', details: 'Exports JSON illimités + outils d analyse & alertes' },
-    { plan: 'Business / Vitrine', prixXaf: 25000, periode: '/ an', details: 'Mise en avant annuaire local + fiche service dédiée' }
+  const PLANS = [
+    { plan: 'Découverte', prixXaf: 0, periode: '/ mois', details: 'Suivi bankroll local + annuaire services + moteur IA de base' },
+    { plan: 'Pro Analyste', prixXaf: 5000, periode: '/ mois', details: 'Simulation Elo/Poisson + exports JSON + regroupement par devise' },
+    { plan: 'Business / Vitrine', prixXaf: 25000, periode: '/ an', details: 'Mise en avant annuaire local + fiche prestataire dédiée' }
   ];
-
-  const TAUX_DEPUIS_XAF = {
-    XAF: 1,
-    EUR: 1 / 655.957,
-    USD: 1 / 600,
-    GBP: 1 / 760
-  };
-
-  const INITIATIVES = [
-    {
-      titre: 'Fonds Éducation & Numérique Jeunes',
-      type: 'Association / Don',
-      region: 'Afrique Centrale',
-      statut: 'Vérifié'
-    },
-    {
-      titre: 'Programme Santé & Prévention Communautaire',
-      type: 'Initiative solidaire',
-      region: 'Cameroun',
-      statut: 'Vérifié'
-    },
-    {
-      titre: 'Grand Tirage Voyage & Mobilité Internationale',
-      type: 'Sweepstakes / Concours',
-      region: 'International',
-      statut: 'Actif'
-    }
+  const TAUX = { XAF: 1, EUR: 1 / 655.957, USD: 1 / 600, GBP: 1 / 760 };
+  const INITS = [
+    { titre: 'Fonds Éducation & Numérique Jeunes', type: 'Association / Don', region: 'Afrique Centrale', statut: 'Vérifié' },
+    { titre: 'Programme Santé & Prévention Communautaire', type: 'Initiative solidaire', region: 'Cameroun', statut: 'Vérifié' },
+    { titre: 'Grand Tirage Voyage & Mobilité Internationale', type: 'Sweepstakes / Concours', region: 'International', statut: 'Actif' }
   ];
+  const loadSvcs = () => { try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); return Array.isArray(d) && d.length ? d : DEFAULTS.slice(); } catch (_) { return DEFAULTS.slice(); } };
+  const saveSvcs = (list) => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (_) {} };
+  const fmtXaf = (n) => `${Number(n || 0).toLocaleString('fr-FR')} XAF`;
+  const fact = (n) => { let r = 1; for (let i = 2; i <= n; i += 1) r *= i; return r; };
+  const pois = (l, k) => (Math.pow(l, k) * Math.exp(-l)) / fact(k);
 
-  function formaterXaf(montant) {
-    return `${Number(montant || 0).toLocaleString('fr-FR')} XAF`;
+  function calcAi() {
+    const out = document.getElementById('ms-ai-output');
+    if (!out) return;
+    const eloA = Number(document.getElementById('ms-ai-elo-a')?.value) || 1560;
+    const eloB = Number(document.getElementById('ms-ai-elo-b')?.value) || 1490;
+    const xgA = Math.max(0.1, Number(document.getElementById('ms-ai-xg-a')?.value) || 1.65);
+    const xgB = Math.max(0.1, Number(document.getElementById('ms-ai-xg-b')?.value) || 1.05);
+    const cote = Math.max(1.01, Number(document.getElementById('ms-ai-odds')?.value) || 1.95);
+    const br = Math.max(0, Number(document.getElementById('ms-ai-bankroll')?.value) || 50000);
+    const pElo = 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+    let pPois = 0;
+    for (let i = 0; i <= 5; i += 1) for (let j = 0; j < i; j += 1) pPois += pois(xgA, i) * pois(xgB, j);
+    const pComb = Math.min(0.95, Math.max(0.02, pElo * 0.45 + pPois * 0.55));
+    const edge = pComb * cote - 1;
+    const stake = Math.round(br * (edge > 0 ? Math.min(0.05, (edge / (cote - 1)) * 0.25) : 0));
+    out.innerHTML = `<div class="ms-card ms-anim-in"><div><strong>Probabilité combinée :</strong> ${(pComb * 100).toFixed(1)}% (Elo ${(pElo * 100).toFixed(1)}% • Poisson ${(pPois * 100).toFixed(1)}%)</div><div style="margin-top:6px;"><strong>Edge :</strong> ${(edge * 100).toFixed(1)}% • <strong>Mise prudente :</strong> ${stake.toLocaleString('fr-FR')}</div></div>`;
   }
 
-  function renderServices(filtreTexte = '', filtreCat = 'all') {
-    const liste = document.getElementById('ms-services-list');
-    if (!liste) return;
-    const q = filtreTexte.trim().toLowerCase();
-    const items = SERVICES_LOCAUX.filter((s) => {
-      const okCat = filtreCat === 'all' || s.categorie === filtreCat;
-      const okTxt = !q || `${s.nom} ${s.categorie} ${s.ville}`.toLowerCase().includes(q);
-      return okCat && okTxt;
-    });
-
-    liste.innerHTML = items.length
-      ? items.map((s) => `
-          <div style="border:1px solid rgba(148,163,184,0.25);border-radius:10px;padding:12px;margin-bottom:10px;background:rgba(15,23,42,0.45);">
-            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-              <strong>${s.nom}</strong>
-              <span style="opacity:0.85;">${s.categorie} • ${s.ville}</span>
-            </div>
-            <div style="margin-top:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:0.92em;">
-              <span>Tarif : <strong>${s.tarif}</strong></span>
-              <span>Contact : ${s.contact}</span>
-            </div>
-          </div>
-        `).join('')
-      : '<p>Aucun service ne correspond à ce filtre.</p>';
+  function renderSvcs(q = '', cat = 'all') {
+    const el = document.getElementById('ms-services-list');
+    if (!el) return;
+    const ql = q.trim().toLowerCase();
+    const list = loadSvcs().filter((s) => (cat === 'all' || s.categorie === cat) && (!ql || `${s.nom} ${s.categorie} ${s.ville}`.toLowerCase().includes(ql)));
+    el.innerHTML = list.length ? list.map((s) => `<div class="ms-card ms-anim-in"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${s.nom}</strong><span>${s.categorie} • ${s.ville}</span></div><div style="margin-top:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:0.92em;"><span>Tarif : <strong>${s.tarif}</strong></span><span>Contact : ${s.contact}</span></div></div>`).join('') : '<p class="ms-card">Aucun service.</p>';
   }
 
   function renderPlans() {
-    const cont = document.getElementById('ms-plans-list');
-    if (!cont) return;
-    cont.innerHTML = PLANS_FCFA.map((p) => `
-      <div style="border:1px solid rgba(148,163,184,0.25);border-radius:10px;padding:12px;margin-bottom:10px;background:rgba(15,23,42,0.45);">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-          <strong>${p.plan}</strong>
-          <span><strong>${formaterXaf(p.prixXaf)}</strong> ${p.periode}</span>
-        </div>
-        <p style="margin:6px 0 0;font-size:0.92em;opacity:0.9;">${p.details}</p>
-      </div>
-    `).join('');
+    const el = document.getElementById('ms-plans-list');
+    if (!el) return;
+    el.innerHTML = PLANS.map((p) => `<div class="ms-card ms-anim-in"><div style="display:flex;justify-content:space-between;gap:8px;"><strong>${p.plan}</strong><span><strong>${fmtXaf(p.prixXaf)}</strong> ${p.periode}</span></div><p style="margin:6px 0 0;font-size:0.92em;">${p.details}</p></div>`).join('');
   }
 
-  function convertirDevise() {
-    const input = document.getElementById('ms-xaf-amount');
-    const select = document.getElementById('ms-target-currency');
+  function calcFx() {
+    const inp = document.getElementById('ms-xaf-amount');
+    const sel = document.getElementById('ms-target-currency');
     const out = document.getElementById('ms-currency-result');
-    if (!input || !select || !out) return;
-    const xaf = Math.max(0, Number(input.value) || 0);
-    const dev = select.value;
-    const taux = TAUX_DEPUIS_XAF[dev] || 1;
-    const converti = xaf * taux;
-    out.textContent = `${formaterXaf(xaf)} ≈ ${converti.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ${dev}`;
+    if (!inp || !sel || !out) return;
+    const xaf = Math.max(0, Number(inp.value) || 0);
+    const dev = sel.value;
+    out.textContent = `${fmtXaf(xaf)} ≈ ${(xaf * (TAUX[dev] || 1)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ${dev}`;
   }
 
-  function renderInitiatives() {
-    const cont = document.getElementById('ms-initiatives-list');
-    if (!cont) return;
-    cont.innerHTML = INITIATIVES.map((it) => `
-      <div style="border:1px solid rgba(148,163,184,0.25);border-radius:10px;padding:12px;margin-bottom:10px;background:rgba(15,23,42,0.45);">
-        <strong>${it.titre}</strong>
-        <div style="margin-top:4px;font-size:0.9em;opacity:0.9;">${it.type} • ${it.region} • <em>${it.statut}</em></div>
-      </div>
-    `).join('');
+  function renderInits() {
+    const el = document.getElementById('ms-initiatives-list');
+    if (!el) return;
+    el.innerHTML = INITS.map((it) => `<div class="ms-card ms-anim-in"><strong>${it.titre}</strong><div style="margin-top:4px;font-size:0.9em;">${it.type} • ${it.region} • <em>${it.statut}</em></div></div>`).join('');
   }
 
-  function activerOnglet(nomOnglet) {
-    document.querySelectorAll('[data-ms-panel]').forEach((panel) => {
-      const cible = panel.getAttribute('data-ms-panel');
-      panel.style.display = (nomOnglet === 'all' || cible === nomOnglet) ? '' : 'none';
+  function setTab(tab) {
+    const br = document.getElementById('khaleb-bankroll-module');
+    if (br) br.style.display = (tab === 'all' || tab === 'bankroll') ? '' : 'none';
+    document.querySelectorAll('[data-ms-panel]').forEach((p) => {
+      const show = tab === 'all' || p.getAttribute('data-ms-panel') === tab;
+      p.style.display = show ? '' : 'none';
+      if (show) { p.classList.remove('ms-anim-in'); void p.offsetWidth; p.classList.add('ms-anim-in'); }
     });
-    document.querySelectorAll('[data-ms-tab]').forEach((btn) => {
-      const actif = btn.getAttribute('data-ms-tab') === nomOnglet;
-      btn.setAttribute('aria-pressed', actif ? 'true' : 'false');
-      btn.style.outline = actif ? '2px solid #22c55e' : 'none';
+    document.querySelectorAll('[data-ms-tab]').forEach((b) => {
+      const active = b.getAttribute('data-ms-tab') === tab;
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      b.classList.toggle('ms-tab-active', active);
     });
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('ms-service-search');
-    const catSelect = document.getElementById('ms-service-category');
-    const xafInput = document.getElementById('ms-xaf-amount');
-    const devSelect = document.getElementById('ms-target-currency');
-
-    renderServices();
-    renderPlans();
-    convertirDevise();
-    renderInitiatives();
-    activerOnglet('all');
-
-    document.querySelectorAll('[data-ms-tab]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        activerOnglet(btn.getAttribute('data-ms-tab') || 'all');
+  function start() {
+    const sInp = document.getElementById('ms-service-search');
+    const cSel = document.getElementById('ms-service-category');
+    const xInp = document.getElementById('ms-xaf-amount');
+    const dSel = document.getElementById('ms-target-currency');
+    const lSel = document.getElementById('ms-lang-select');
+    const form = document.getElementById('ms-add-service-form');
+    renderSvcs(); renderPlans(); calcFx(); renderInits(); calcAi(); setTab('all');
+    document.querySelectorAll('[data-ms-tab]').forEach((b) => b.addEventListener('click', () => setTab(b.getAttribute('data-ms-tab') || 'all')));
+    if (sInp) sInp.addEventListener('input', () => renderSvcs(sInp.value, cSel?.value || 'all'));
+    if (cSel) cSel.addEventListener('change', () => renderSvcs(sInp?.value || '', cSel.value));
+    if (xInp) xInp.addEventListener('input', calcFx);
+    if (dSel) dSel.addEventListener('change', calcFx);
+    if (lSel) lSel.addEventListener('change', () => {
+      const t = document.getElementById('ms-hub-title');
+      if (t) t.textContent = lSel.value === 'en' ? 'Multiservice Hub & Local AI — khaleb-predict' : 'Hub Multiservice & IA Locale — khaleb-predict';
+    });
+    ['ms-ai-elo-a', 'ms-ai-elo-b', 'ms-ai-xg-a', 'ms-ai-xg-b', 'ms-ai-odds', 'ms-ai-bankroll'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', calcAi);
+    });
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nom = String(document.getElementById('ms-new-nom')?.value || '').trim();
+        if (!nom) return;
+        const list = loadSvcs();
+        list.unshift({
+          nom,
+          categorie: String(document.getElementById('ms-new-cat')?.value || 'IT & Réseaux'),
+          ville: String(document.getElementById('ms-new-ville')?.value || 'Yaoundé').trim() || 'Yaoundé',
+          tarif: String(document.getElementById('ms-new-tarif')?.value || 'Sur devis').trim() || 'Sur devis',
+          contact: String(document.getElementById('ms-new-contact')?.value || 'WhatsApp').trim() || 'WhatsApp'
+        });
+        saveSvcs(list);
+        form.reset();
+        renderSvcs(sInp?.value || '', cSel?.value || 'all');
       });
-    });
+    }
+  }
 
-    if (searchInput) {
-      searchInput.addEventListener('input', () => renderServices(searchInput.value, catSelect?.value || 'all'));
-    }
-    if (catSelect) {
-      catSelect.addEventListener('change', () => renderServices(searchInput?.value || '', catSelect.value));
-    }
-    if (xafInput) xafInput.addEventListener('input', convertirDevise);
-    if (devSelect) devSelect.addEventListener('change', convertirDevise);
-  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
